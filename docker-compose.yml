@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  rabbitmq:
+    build: rabbitmq/.
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+        - RABBITMQ_DEFAULT_USER=${AMQP_USER}
+        - RABBITMQ_DEFAULT_PASS=${AMQP_PASSWORD}
+        - RABBITMQ_DEFAULT_VHOST=${AMQP_VHOST}
+        - RABBITMQ_SERVER_PORT=${AMQP_PORT}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:15672" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  producer:
+    build:
+      context: .
+      dockerfile: producer/Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    links:
+      - rabbitmq
+    environment:
+      RABBITMQ_ADDRESS: ${AMQP_ADDRESS}
+      RABBITMQ_VHOST: ${AMQP_VHOST}
+      RABBITMQ_PORT: ${AMQP_PORT}
+      RABBITMQ_USER: ${AMQP_USER}
+      RABBITMQ_PASS: ${AMQP_PASSWORD}
+      EXTERNAL_API_URL: ${EXTERNAL_API_URL}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
